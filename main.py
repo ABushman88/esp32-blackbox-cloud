@@ -15,5 +15,10 @@ def root():
 
 @app.post("/telemetry")
 def receive_data(data: Telemetry):
-    print("DATA:", data)
-    return {"status": "logged", "timestamp": time.time()}
+    print("DEVICE:", data.device_id)
+    print("TEMP:", data.temperature)
+    print("HUM:", data.humidity)
+    print("TIME:", time.time())
+    print("-----------------------")
+
+return {"status": "logged"}
