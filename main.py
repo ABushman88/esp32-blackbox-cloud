@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from datetime import datetime
 import pytz
+import os
 
 app = FastAPI()
 telemetry_data = []
@@ -10,7 +11,8 @@ telemetry_data = []
 central_tz = pytz.timezone("US/Central")
 
 # Serve static files (html, js, css)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.post("/telemetry")
 async def receive_telemetry(request: Request):
