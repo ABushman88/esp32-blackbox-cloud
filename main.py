@@ -7,7 +7,12 @@ import os
 import sqlite3
 
 app = FastAPI()
-conn = sqlite3.connect("telemetry.db", check_same_thread=False)
+
+# ----------------------------
+# Database setup
+# ----------------------------
+DB_PATH = "telemetry.db"
+conn = sqlite3.connect(DB_PATH, check_same_thread=False)
 cursor = conn.cursor()
 
 cursor.execute("""
@@ -16,21 +21,28 @@ CREATE TABLE IF NOT EXISTS telemetry (
     device_id TEXT,
     temperature REAL,
     humidity REAL,
-    timestamp, TEXT
+    timestamp TEXT
 )
 """)
-conn.commmit()
 
-telemetry_data = []
+conn.commit()
 
-# Set timezone to Central US
+# ----------------------------
+# Timezone
+# ----------------------------
 central_tz = pytz.timezone("US/Central")
 
-# Serve static files (html, js, css) from the 'static' folder
-STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+# ----------------------------
+# Static files
+# ----------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-# Receive telemetry POST requests from ESP32
+# ----------------------------
+# Telemetry ingestion
+# ----------------------------
 @app.post("/telemetry")
 async def receive_telemetry(request: Request):
     data = await request.json()
@@ -42,18 +54,23 @@ async def receive_telemetry(request: Request):
             (data["device_id"], data["temperature"], data["humidity"], now_ct)
         )
         conn.commit()
-
         return {"status": "logged"}
     else:
         return {"status": "error", "message": "missing fields"}
 
-# Serve telemetry data as JSON
+# ----------------------------
+# Dashboard data
+# ----------------------------
 @app.get("/data")
 async def get_data():
-    cursor.execute("SELECT device_id, temperature, humidity, timestamp FROM telemetry ORDER BY id DESC LIMIT 100")
+    cursor.execute("""
+        SELECT device_id, temperature, humidity, timestamp
+        FROM telemetry
+        ORDER BY id DESC
+        LIMIT 100
+    """)
     rows = cursor.fetchall()
-
-    rows.reverse()  # so chart is oldest → newest
+    rows.reverse()
 
     return JSONResponse({
         "timestamps": [r[3] for r in rows],
@@ -62,7 +79,9 @@ async def get_data():
         "humidities": [r[2] for r in rows],
     })
 
-# Serve the dashboard HTML
+# ----------------------------
+# Serve dashboard
+# ----------------------------
 @app.get("/", response_class=HTMLResponse)
 async def index():
     index_file = os.path.join(STATIC_DIR, "index.html")
@@ -70,5 +89,4 @@ async def index():
         with open(index_file, "r", encoding="utf-8") as f:
             return f.read()
     else:
-        return HTMLResponse("<h1>Dashboard not found</h1>", status_code=404)
-
+        return "<h1>Dashboard not found</h1>"
