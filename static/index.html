@@ -4,6 +4,37 @@
     <title>ESP32 Blackbox Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+    <style>
+        body {
+            background-color: #121212;   /* dark background */
+    color: #ffffff;              /* white text */
+    font-family: Arial, sans-serif;
+  }
+
+  h1, h2 {
+    color: #f0f0f0;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    background-color: #1e1e1e;  /* dark table bg */
+  }
+
+  table th, table td {
+    border: 1px solid #333;
+    padding: 6px 10px;
+    color: #ffffff;
+  }
+
+  table th {
+    background-color: #2c2c2c;  /* header darker */
+  }
+
+  canvas {
+    background-color: #1e1e1e;
+  }          
+</style>
 <body>
 <h1>ESP32 Blackbox Dashboard</h1>
 
@@ -70,22 +101,32 @@ async function updateCharts(chartTemp, chartHum) {
 const ctxTemp=document.getElementById('tempChart').getContext('2d');
 const ctxHum=document.getElementById('humChart').getContext('2d');
 
-const chartTemp=new Chart(ctxTemp,{
+const chartTemp = new Chart(ctxTemp,{
     type:'line',
     data:{labels:[],datasets:[
-        {label:'ESP32 #1 Temp',data:[],borderColor:'red',backgroundColor:'rgba(255,0,0,0.1)',fill:true,tension:0.4},
-        {label:'ESP32 #2 Temp',data:[],borderColor:'green',backgroundColor:'rgba(0,255,0,0.1)',fill:true,tension:0.4}
+        {label:'ESP32 #1 Temp',data:[],borderColor:'red',backgroundColor:'rgba(255,0,0,0.3)',fill:true,tension:0.4},
+        {label:'ESP32 #2 Temp',data:[],borderColor:'lime',backgroundColor:'rgba(0,255,0,0.3)',fill:true,tension:0.4}
     ]},
-    options:{responsive:true,animation:{duration:300}}
+    options:{responsive:true,animation:{duration:300},
+        scales: {
+            x: { ticks: { color: '#fff' }, grid: { color: '#333' } },
+            y: { ticks: { color: '#fff' }, grid: { color: '#333' } }
+        }
+    }
 });
 
-const chartHum=new Chart(ctxHum,{
+const chartHum = new Chart(ctxHum,{
     type:'line',
     data:{labels:[],datasets:[
-        {label:'ESP32 #1 Hum',data:[],borderColor:'blue',backgroundColor:'rgba(0,0,255,0.1)',fill:true,tension:0.4},
-        {label:'ESP32 #2 Hum',data:[],borderColor:'orange',backgroundColor:'rgba(255,165,0,0.1)',fill:true,tension:0.4}
+        {label:'ESP32 #1 Hum',data:[],borderColor:'cyan',backgroundColor:'rgba(0,255,255,0.3)',fill:true,tension:0.4},
+        {label:'ESP32 #2 Hum',data:[],borderColor:'orange',backgroundColor:'rgba(255,165,0,0.3)',fill:true,tension:0.4}
     ]},
-    options:{responsive:true,animation:{duration:300}}
+    options:{responsive:true,animation:{duration:300},
+        scales: {
+            x: { ticks: { color: '#fff' }, grid: { color: '#333' } },
+            y: { ticks: { color: '#fff' }, grid: { color: '#333' } }
+        }
+    }
 });
 
 setInterval(()=>updateCharts(chartTemp,chartHum),5000);
