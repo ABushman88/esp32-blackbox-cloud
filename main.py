@@ -6,6 +6,7 @@ import pytz
 
 app = FastAPI()
 
+# Allow all origins for testing
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,7 +14,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Store telemetry readings
 telemetry_data = []
+
+# Central USA timezone
 central_tz = pytz.timezone("America/Chicago")
 
 @app.get("/", response_class=JSONResponse)
@@ -95,22 +99,36 @@ def dashboard():
                 return await response.json();
             }
 
-            function updateCards(data) {
-                const devices = {};
-                data.timestamps.forEach((time, i) => {
-                    devices[data.device_ids[i]] = { temp: data.temperatures[i], hum: data.humidities[i] };
-                });
-                if(devices['esp32_blackbox_1']){
-                    document.getElementById('latestTemp1').innerText = devices['esp32_blackbox_1'].temp.toFixed(1) + ' °C';
-                    document.getElementById('latestHum1').innerText = devices['esp32_blackbox_1'].hum.toFixed(1) + ' %';
-                }
-                if(devices['esp32_blackbox_2']){
-                    document.getElementById('latestTemp2').innerText = devices['esp32_blackbox_2'].temp.toFixed(1) + ' °C';
-                    document.getElementById('latestHum2').innerText = devices['esp32_blackbox_2'].hum.toFixed(1) + ' %';
-                }
-            }
+            async function updateCharts(chartTemp, chartHum) {
+                const data = await fetchData();
 
-            function updateTable(data) {
+                // Indices for each device
+                const device1 = data.device_ids.map((id, i) => id === "esp32_blackbox_1" ? i : null).filter(i => i !== null);
+                const device2 = data.device_ids.map((id, i) => id === "esp32_blackbox_2" ? i : null).filter(i => i !== null);
+
+                // Latest readings for cards
+                if(device1.length) {
+                    const last1 = device1[device1.length-1];
+                    document.getElementById('latestTemp1').innerText = data.temperatures[last1].toFixed(1) + " °C";
+                    document.getElementById('latestHum1').innerText = data.humidities[last1].toFixed(1) + " %";
+                }
+                if(device2.length) {
+                    const last2 = device2[device2.length-1];
+                    document.getElementById('latestTemp2').innerText = data.temperatures[last2].toFixed(1) + " °C";
+                    document.getElementById('latestHum2').innerText = data.humidities[last2].toFixed(1) + " %";
+                }
+
+                // Prepare chart data
+                chartTemp.data.labels = data.timestamps;
+                chartTemp.data.datasets[0].data = device1.map(i => data.temperatures[i]);
+                chartTemp.data.datasets[1].data = device2.map(i => data.temperatures[i]);
+                chartTemp.update();
+
+                chartHum.data.datasets[0].data = device1.map(i => data.humidities[i]);
+                chartHum.data.datasets[1].data = device2.map(i => data.humidities[i]);
+                chartHum.update();
+
+                // Update table
                 const tbody = document.querySelector("#dataTable tbody");
                 tbody.innerHTML = "";
                 data.timestamps.slice().reverse().forEach((time, idx) => {
@@ -122,30 +140,6 @@ def dashboard():
                     </tr>`;
                     tbody.innerHTML += row;
                 });
-            }
-
-            async function updateCharts(chartTemp, chartHum) {
-                const data = await fetchData();
-
-                const labels = data.timestamps;
-                const temp1 = [], temp2 = [], hum1 = [], hum2 = [];
-                data.device_ids.forEach((id, idx) => {
-                    if(id === "esp32_blackbox_1"){ temp1.push(data.temperatures[idx]); hum1.push(data.humidities[idx]); }
-                    if(id === "esp32_blackbox_2"){ temp2.push(data.temperatures[idx]); hum2.push(data.humidities[idx]); }
-                });
-
-                chartTemp.data.labels = labels;
-                chartTemp.data.datasets[0].data = temp1;
-                chartTemp.data.datasets[1].data = temp2;
-                chartTemp.update();
-
-                chartHum.data.labels = labels;
-                chartHum.data.datasets[0].data = hum1;
-                chartHum.data.datasets[1].data = hum2;
-                chartHum.update();
-
-                updateCards(data);
-                updateTable(data);
             }
 
             const ctxTemp = document.getElementById('tempChart').getContext('2d');
@@ -184,5 +178,6 @@ def get_data():
     humidities = [entry['humidity'] for entry in telemetry_data]
     device_ids = [entry['device_id'] for entry in telemetry_data]
     return {"timestamps": timestamps, "temperatures": temperatures, "humidities": humidities, "device_ids": device_ids}
+
 
 
