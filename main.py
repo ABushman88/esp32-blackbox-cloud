@@ -26,7 +26,7 @@ async def receive_telemetry(request: Request):
     now_ct = datetime.now(central_tz)
     data["timestamp"] = now_ct.strftime("%Y-%m-%d %H:%M:%S")
     telemetry_data.append(data)
-    if len(telemetry_data) > 50:
+    if len(telemetry_data) > 100:  # keep only last 100 readings
         telemetry_data.pop(0)
     return {"status": "logged"}
 
@@ -42,7 +42,7 @@ def dashboard():
             body { font-family: Arial, sans-serif; background: #f0f2f5; margin: 20px; }
             h1 { text-align: center; color: #333; margin-bottom: 20px; }
 
-            /* Card Styles */
+            /* Cards */
             .card-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; }
             .card { background: #fff; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 20px 30px; text-align: center; min-width: 150px; }
             .card h2 { margin: 0; font-size: 2rem; }
@@ -62,12 +62,20 @@ def dashboard():
 
         <div class="card-container">
             <div class="card">
-                <h2 id="latestTemp">-- °C</h2>
-                <p>Temperature</p>
+                <h2 id="latestTemp1">-- °C</h2>
+                <p>ESP32 #1 Temperature</p>
             </div>
             <div class="card">
-                <h2 id="latestHum">-- %</h2>
-                <p>Humidity</p>
+                <h2 id="latestHum1">-- %</h2>
+                <p>ESP32 #1 Humidity</p>
+            </div>
+            <div class="card">
+                <h2 id="latestTemp2">-- °C</h2>
+                <p>ESP32 #2 Temperature</p>
+            </div>
+            <div class="card">
+                <h2 id="latestHum2">-- %</h2>
+                <p>ESP32 #2 Humidity</p>
             </div>
         </div>
 
@@ -88,10 +96,17 @@ def dashboard():
             }
 
             function updateCards(data) {
-                if(data.timestamps.length > 0) {
-                    const latestIdx = data.timestamps.length - 1;
-                    document.getElementById('latestTemp').innerText = data.temperatures[latestIdx].toFixed(1) + ' °C';
-                    document.getElementById('latestHum').innerText = data.humidities[latestIdx].toFixed(1) + ' %';
+                const devices = {};
+                data.timestamps.forEach((time, i) => {
+                    devices[data.device_ids[i]] = { temp: data.temperatures[i], hum: data.humidities[i] };
+                });
+                if(devices['esp32_blackbox_1']){
+                    document.getElementById('latestTemp1').innerText = devices['esp32_blackbox_1'].temp.toFixed(1) + ' °C';
+                    document.getElementById('latestHum1').innerText = devices['esp32_blackbox_1'].hum.toFixed(1) + ' %';
+                }
+                if(devices['esp32_blackbox_2']){
+                    document.getElementById('latestTemp2').innerText = devices['esp32_blackbox_2'].temp.toFixed(1) + ' °C';
+                    document.getElementById('latestHum2').innerText = devices['esp32_blackbox_2'].hum.toFixed(1) + ' %';
                 }
             }
 
@@ -101,7 +116,7 @@ def dashboard():
                 data.timestamps.slice().reverse().forEach((time, idx) => {
                     const row = `<tr>
                         <td>${time}</td>
-                        <td>esp32_blackbox</td>
+                        <td>${data.device_ids[idx]}</td>
                         <td>${data.temperatures[idx]}</td>
                         <td>${data.humidities[idx]}</td>
                     </tr>`;
@@ -112,12 +127,21 @@ def dashboard():
             async function updateCharts(chartTemp, chartHum) {
                 const data = await fetchData();
 
-                chartTemp.data.labels = data.timestamps;
-                chartTemp.data.datasets[0].data = data.temperatures;
+                const labels = data.timestamps;
+                const temp1 = [], temp2 = [], hum1 = [], hum2 = [];
+                data.device_ids.forEach((id, idx) => {
+                    if(id === "esp32_blackbox_1"){ temp1.push(data.temperatures[idx]); hum1.push(data.humidities[idx]); }
+                    if(id === "esp32_blackbox_2"){ temp2.push(data.temperatures[idx]); hum2.push(data.humidities[idx]); }
+                });
+
+                chartTemp.data.labels = labels;
+                chartTemp.data.datasets[0].data = temp1;
+                chartTemp.data.datasets[1].data = temp2;
                 chartTemp.update();
 
-                chartHum.data.labels = data.timestamps;
-                chartHum.data.datasets[0].data = data.humidities;
+                chartHum.data.labels = labels;
+                chartHum.data.datasets[0].data = hum1;
+                chartHum.data.datasets[1].data = hum2;
                 chartHum.update();
 
                 updateCards(data);
@@ -129,17 +153,22 @@ def dashboard():
 
             const chartTemp = new Chart(ctxTemp, {
                 type: 'line',
-                data: { labels: [], datasets: [{ label: 'Temperature (°C)', data: [], borderColor: 'red', fill: true, tension: 0.4, backgroundColor: 'rgba(255,0,0,0.1)' }] },
+                data: { labels: [], datasets: [
+                    { label: 'ESP32 #1 Temp', data: [], borderColor: 'red', fill: true, tension: 0.4, backgroundColor: 'rgba(255,0,0,0.1)' },
+                    { label: 'ESP32 #2 Temp', data: [], borderColor: 'green', fill: true, tension: 0.4, backgroundColor: 'rgba(0,255,0,0.1)' }
+                ]},
                 options: { responsive: true, animation: { duration: 300 }, scales: { x: { display: true }, y: { beginAtZero: false } } }
             });
 
             const chartHum = new Chart(ctxHum, {
                 type: 'line',
-                data: { labels: [], datasets: [{ label: 'Humidity (%)', data: [], borderColor: 'blue', fill: true, tension: 0.4, backgroundColor: 'rgba(0,0,255,0.1)' }] },
+                data: { labels: [], datasets: [
+                    { label: 'ESP32 #1 Hum', data: [], borderColor: 'blue', fill: true, tension: 0.4, backgroundColor: 'rgba(0,0,255,0.1)' },
+                    { label: 'ESP32 #2 Hum', data: [], borderColor: 'orange', fill: true, tension: 0.4, backgroundColor: 'rgba(255,165,0,0.1)' }
+                ]},
                 options: { responsive: true, animation: { duration: 300 }, scales: { x: { display: true }, y: { beginAtZero: true } } }
             });
 
-            // Update everything every 5 seconds
             setInterval(() => updateCharts(chartTemp, chartHum), 5000);
             updateCharts(chartTemp, chartHum);
         </script>
@@ -153,5 +182,7 @@ def get_data():
     timestamps = [entry['timestamp'] for entry in telemetry_data]
     temperatures = [entry['temperature'] for entry in telemetry_data]
     humidities = [entry['humidity'] for entry in telemetry_data]
-    return {"timestamps": timestamps, "temperatures": temperatures, "humidities": humidities}
+    device_ids = [entry['device_id'] for entry in telemetry_data]
+    return {"timestamps": timestamps, "temperatures": temperatures, "humidities": humidities, "device_ids": device_ids}
+
 
