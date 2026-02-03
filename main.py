@@ -4,8 +4,23 @@ from fastapi.staticfiles import StaticFiles
 from datetime import datetime
 import pytz
 import os
+import sqlite3
 
 app = FastAPI()
+conn = sqlite3.connect("telemetry.db", check_same_thread=False)
+cursor = conn.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS telemetry (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    device_id TEXT,
+    temperature REAL,
+    humidity REAL,
+    timestamp, TEXT
+)
+""")
+conn.commmit()
+
 telemetry_data = []
 
 # Set timezone to Central US
@@ -19,14 +34,15 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 @app.post("/telemetry")
 async def receive_telemetry(request: Request):
     data = await request.json()
-    now_ct = datetime.now(central_tz)
-    data["timestamp"] = now_ct.strftime("%Y-%m-%d %H:%M:%S")
+    now_ct = datetime.now(central_tz).strftime("%Y-%m-%d %H:%M:%S")
 
     if "temperature" in data and "humidity" in data and "device_id" in data:
-        telemetry_data.append(data)
-        # Keep only the last 100 readings to avoid memory issues
-        if len(telemetry_data) > 100:
-            telemetry_data.pop(0)
+        cursor.execute(
+            "INSERT INTO telemetry (device_id, temperature, humidity, timestamp) VALUES (?, ?, ?, ?)",
+            (data["device_id"], data["temperature"], data["humidity"], now_ct)
+        )
+        conn.commit()
+
         return {"status": "logged"}
     else:
         return {"status": "error", "message": "missing fields"}
@@ -34,11 +50,16 @@ async def receive_telemetry(request: Request):
 # Serve telemetry data as JSON
 @app.get("/data")
 async def get_data():
+    cursor.execute("SELECT device_id, temperature, humidity, timestamp FROM telemetry ORDER BY id DESC LIMIT 100")
+    rows = cursor.fetchall()
+
+    rows.reverse()  # so chart is oldest → newest
+
     return JSONResponse({
-        "timestamps": [d["timestamp"] for d in telemetry_data],
-        "device_ids": [d["device_id"] for d in telemetry_data],
-        "temperatures": [d["temperature"] for d in telemetry_data],
-        "humidities": [d["humidity"] for d in telemetry_data],
+        "timestamps": [r[3] for r in rows],
+        "device_ids": [r[0] for r in rows],
+        "temperatures": [r[1] for r in rows],
+        "humidities": [r[2] for r in rows],
     })
 
 # Serve the dashboard HTML
