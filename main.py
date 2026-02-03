@@ -2,6 +2,10 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
+import pytz
+
+tz = pytz.timezone("America/Chicago") # your local timezone
+data["timestamp"] = datetime.now(tz).isoformat()
 
 app = FastAPI()
 
