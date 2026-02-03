@@ -29,10 +29,15 @@ async def receive_telemetry(request: Request):
     data = await request.json()
     now_ct = datetime.now(central_tz)
     data["timestamp"] = now_ct.strftime("%Y-%m-%d %H:%M:%S")
-    telemetry_data.append(data)
-    if len(telemetry_data) > 100:  # keep only last 100 readings
-        telemetry_data.pop(0)
-    return {"status": "logged"}
+
+    # Make sure both keys exist
+    if "temperature" in data and "humidity" in data and "device_id" in data:
+        telemetry_data.append(data)
+        if len(telemetry_data) > 100:
+            telemetry_data.pop(0)
+        return {"status": "logged"}
+    else:
+        return {"status": "error", "message": "missing fields"}
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard():
