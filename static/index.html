@@ -3,38 +3,51 @@
 <head>
     <title>ESP32 Blackbox Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
     <style>
+        /* Dark mode body */
         body {
-            background-color: #121212;   /* dark background */
-    color: #ffffff;              /* white text */
-    font-family: Arial, sans-serif;
-  }
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
 
-  h1, h2 {
-    color: #f0f0f0;
-  }
+        h1, h2 {
+            color: #f0f0f0;
+        }
 
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    background-color: #1e1e1e;  /* dark table bg */
-  }
+        /* Table styling */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background-color: #1e1e1e;
+            display: block;
+            max-height: 300px;
+            overflow-y: auto;
+        }
 
-  table th, table td {
-    border: 1px solid #333;
-    padding: 6px 10px;
-    color: #ffffff;
-  }
+        table th, table td {
+            border: 1px solid #333;
+            padding: 4px 8px;
+            font-size: 12px;
+            color: #ffffff;
+            text-align: center;
+        }
 
-  table th {
-    background-color: #2c2c2c;  /* header darker */
-  }
+        table th {
+            background-color: #2c2c2c;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
 
-  canvas {
-    background-color: #1e1e1e;
-  }          
-</style>
+        /* Canvas background */
+        canvas {
+            background-color: #1e1e1e;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
 <body>
 <h1>ESP32 Blackbox Dashboard</h1>
 
@@ -44,14 +57,19 @@
     <div>ESP32 #2: <span id="latestTemp2">--</span>, Hum: <span id="latestHum2">--</span></div>
 </div>
 
-<canvas id="tempChart" height="100"></canvas>
-<canvas id="humChart" height="100"></canvas>
+<canvas id="tempChart" height="150"></canvas>
+<canvas id="humChart" height="150"></canvas>
 
 <table border="1" id="dataTable">
-<thead>
-<tr><th>Time</th><th>Device</th><th>Temp (°C)</th><th>Humidity (%)</th></tr>
-</thead>
-<tbody></tbody>
+    <thead>
+        <tr>
+            <th>Time</th>
+            <th>Device</th>
+            <th>Temp (°C)</th>
+            <th>Humidity (%)</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
 </table>
 
 <script>
@@ -86,6 +104,7 @@ async function updateCharts(chartTemp, chartHum) {
     chartHum.data.datasets[1].data = device2.length?device2.map(i=>data.humidities[i]):[];
     chartHum.update();
 
+    // Update table
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
     data.timestamps.slice().reverse().forEach((time, idx) => {
