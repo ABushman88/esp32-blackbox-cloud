@@ -12,7 +12,7 @@ class Telemetry(BaseModel):
 @app.get("/")
 def root():
     return {"status": "Blackbox online"}
-
+    
 @app.post("/telemetry")
 def receive_data(data: Telemetry):
     print("DEVICE:", data.device_id)
@@ -21,4 +21,4 @@ def receive_data(data: Telemetry):
     print("TIME:", time.time())
     print("-----------------------")
 
-return {"status": "logged"}
+    return {"status": "logged"}
