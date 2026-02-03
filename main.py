@@ -39,5 +39,6 @@ async def get_data():
 
 @app.get("/", response_class=HTMLResponse)
 async def index():
-    with open("static/index.html") as f:
+    with open(os.path.join(STATIC_DIR, "index.html")) as f:
         return f.read()
+
