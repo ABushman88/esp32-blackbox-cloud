@@ -141,5 +141,17 @@ def dashboard():
 
             // Update everything every 5 seconds
             setInterval(() => updateCharts(chartTemp, chartHum), 5000);
+            updateCharts(chartTemp, chartHum);
+        </script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(html)
 
+@app.get("/data", response_class=JSONResponse)
+def get_data():
+    timestamps = [entry['timestamp'] for entry in telemetry_data]
+    temperatures = [entry['temperature'] for entry in telemetry_data]
+    humidities = [entry['humidity'] for entry in telemetry_data]
+    return {"timestamps": timestamps, "temperatures": temperatures, "humidities": humidities}
 
