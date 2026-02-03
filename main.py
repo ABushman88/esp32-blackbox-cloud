@@ -93,79 +93,82 @@ def dashboard():
             <tbody></tbody>
         </table>
 
-        <script>
-            async function fetchData() {
-                const response = await fetch('/data');
-                return await response.json();
-            }
-
-            async function updateCharts(chartTemp, chartHum) {
-                const data = await fetchData();
-
-                // Indices for each device
-                const device1 = data.device_ids.map((id, i) => id === "esp32_blackbox_1" ? i : null).filter(i => i !== null);
-                const device2 = data.device_ids.map((id, i) => id === "esp32_blackbox_2" ? i : null).filter(i => i !== null);
-
-                // Latest readings for cards
-                if(device1.length) {
-                    const last1 = device1[device1.length-1];
-                    document.getElementById('latestTemp1').innerText = data.temperatures[last1].toFixed(1) + " °C";
-                    document.getElementById('latestHum1').innerText = data.humidities[last1].toFixed(1) + " %";
-                }
-                if(device2.length) {
-                    const last2 = device2[device2.length-1];
-                    document.getElementById('latestTemp2').innerText = data.temperatures[last2].toFixed(1) + " °C";
-                    document.getElementById('latestHum2').innerText = data.humidities[last2].toFixed(1) + " %";
-                }
-
-                // Prepare chart data
-                chartTemp.data.labels = data.timestamps;
-                chartTemp.data.datasets[0].data = device1.map(i => data.temperatures[i]);
-                chartTemp.data.datasets[1].data = device2.map(i => data.temperatures[i]);
-                chartTemp.update();
-
-                chartHum.data.datasets[0].data = device1.map(i => data.humidities[i]);
-                chartHum.data.datasets[1].data = device2.map(i => data.humidities[i]);
-                chartHum.update();
-
-                // Update table
-                const tbody = document.querySelector("#dataTable tbody");
-                tbody.innerHTML = "";
-                data.timestamps.slice().reverse().forEach((time, idx) => {
-                    const row = `<tr>
-                        <td>${time}</td>
-                        <td>${data.device_ids[idx]}</td>
-                        <td>${data.temperatures[idx]}</td>
-                        <td>${data.humidities[idx]}</td>
-                    </tr>`;
-                    tbody.innerHTML += row;
-                });
-            }
-
-            const ctxTemp = document.getElementById('tempChart').getContext('2d');
-            const ctxHum = document.getElementById('humChart').getContext('2d');
-
-            const chartTemp = new Chart(ctxTemp, {
-                type: 'line',
-                data: { labels: [], datasets: [
-                    { label: 'ESP32 #1 Temp', data: [], borderColor: 'red', fill: true, tension: 0.4, backgroundColor: 'rgba(255,0,0,0.1)' },
-                    { label: 'ESP32 #2 Temp', data: [], borderColor: 'green', fill: true, tension: 0.4, backgroundColor: 'rgba(0,255,0,0.1)' }
-                ]},
-                options: { responsive: true, animation: { duration: 300 }, scales: { x: { display: true }, y: { beginAtZero: false } } }
-            });
-
-            const chartHum = new Chart(ctxHum, {
-                type: 'line',
-                data: { labels: [], datasets: [
-                    { label: 'ESP32 #1 Hum', data: [], borderColor: 'blue', fill: true, tension: 0.4, backgroundColor: 'rgba(0,0,255,0.1)' },
-                    { label: 'ESP32 #2 Hum', data: [], borderColor: 'orange', fill: true, tension: 0.4, backgroundColor: 'rgba(255,165,0,0.1)' }
-                ]},
-                options: { responsive: true, animation: { duration: 300 }, scales: { x: { display: true }, y: { beginAtZero: true } } }
-            });
-
-            setInterval(() => updateCharts(chartTemp, chartHum), 5000);
-            updateCharts(chartTemp, chartHum);
-        </script>
+    <script>
+    async function fetchData() {
+        const response = await fetch('/data');
+        return await response.json();
+    }
+    
+    async function updateCharts(chartTemp, chartHum) {
+        const data = await fetchData();
+    
+        // Filter indices for each device
+        const device1 = data.device_ids.map((id, i) => id === "esp32_blackbox_1" ? i : null).filter(i => i !== null);
+        const device2 = data.device_ids.map((id, i) => id === "esp32_blackbox_2" ? i : null).filter(i => i !== null);
+    
+        // Latest readings for cards
+        if(device1.length) {
+            const last1 = device1[device1.length - 1];
+            document.getElementById('latestTemp1').innerText = data.temperatures[last1].toFixed(1) + " °C";
+            document.getElementById('latestHum1').innerText = data.humidities[last1].toFixed(1) + " %";
+        }
+        if(device2.length) {
+            const last2 = device2[device2.length - 1];
+            document.getElementById('latestTemp2').innerText = data.temperatures[last2].toFixed(1) + " °C";
+            document.getElementById('latestHum2').innerText = data.humidities[last2].toFixed(1) + " %";
+        }
+    
+        // Chart data
+        chartTemp.data.labels = data.timestamps;
+        chartTemp.data.datasets[0].data = device1.length ? device1.map(i => data.temperatures[i]) : [];
+        chartTemp.data.datasets[1].data = device2.length ? device2.map(i => data.temperatures[i]) : [];
+        chartTemp.update();
+    
+        chartHum.data.labels = data.timestamps;
+        chartHum.data.datasets[0].data = device1.length ? device1.map(i => data.humidities[i]) : [];
+        chartHum.data.datasets[1].data = device2.length ? device2.map(i => data.humidities[i]) : [];
+        chartHum.update();
+    
+        // Table (latest 100 readings)
+        const tbody = document.querySelector("#dataTable tbody");
+        tbody.innerHTML = "";
+        data.timestamps.slice().reverse().forEach((time, idx) => {
+            const row = `<tr>
+                <td>${time}</td>
+                <td>${data.device_ids[idx]}</td>
+                <td>${data.temperatures[idx]}</td>
+                <td>${data.humidities[idx]}</td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+    }
+    
+    // Chart setup
+    const ctxTemp = document.getElementById('tempChart').getContext('2d');
+    const ctxHum = document.getElementById('humChart').getContext('2d');
+    
+    const chartTemp = new Chart(ctxTemp, {
+        type: 'line',
+        data: { labels: [], datasets: [
+            { label: 'ESP32 #1 Temp', data: [], borderColor: 'red', backgroundColor: 'rgba(255,0,0,0.1)', fill: true, tension: 0.4 },
+            { label: 'ESP32 #2 Temp', data: [], borderColor: 'green', backgroundColor: 'rgba(0,255,0,0.1)', fill: true, tension: 0.4 }
+        ]},
+        options: { responsive: true, animation: { duration: 300 }, scales: { x: { display: true }, y: { beginAtZero: false } } }
+    });
+    
+    const chartHum = new Chart(ctxHum, {
+        type: 'line',
+        data: { labels: [], datasets: [
+            { label: 'ESP32 #1 Hum', data: [], borderColor: 'blue', backgroundColor: 'rgba(0,0,255,0.1)', fill: true, tension: 0.4 },
+            { label: 'ESP32 #2 Hum', data: [], borderColor: 'orange', backgroundColor: 'rgba(255,165,0,0.1)', fill: true, tension: 0.4 }
+        ]},
+        options: { responsive: true, animation: { duration: 300 }, scales: { x: { display: true }, y: { beginAtZero: true } } }
+    });
+    
+    // Update every 5 seconds
+    setInterval(() => updateCharts(chartTemp, chartHum), 5000);
+    updateCharts(chartTemp, chartHum);
+    </script>
     </body>
     </html>
     """
