@@ -3,7 +3,7 @@
 <head>
     <title>ESP32 Blackbox Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
+    <style>766
         body {
             background-color: #121212;
             color: #ffffff;
@@ -65,19 +65,77 @@
             .latest-readings {
                 flex-direction: column;
             }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .device {
+            flex: 1;
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 0 10px #000;
+        }
+        
+        .device h3 {
+            margin: 4px 0;
+            font-size: 15px;
+        }
+        
+        .device .value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+        
+        .device small {
+            color: #aaa;
+        }
+        
+        /* Chart sizing */
+        .chart-container {
+            height: 40vh;
+            margin-bottom: 10px;
+        }
+        
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
         }
     </style>
 </head>
 <body>
 <h1>ESP32 Blackbox Dashboard</h1>
 
-<div class="latest-readings">
-    <div>ESP32 #1: <span id="latestTemp1">--</span>, Hum: <span id="latestHum1">--</span></div>
-    <div>ESP32 #2: <span id="latestTemp2">--</span>, Hum: <span id="latestHum2">--</span></div>
+<div class="status-bar">
+    <div class="device">
+        <h3>ESP32 #1</h3>
+        <div class="value" id="latestTemp1">--</div>
+        <small>Temperature</small>
+        <div class="value" id="latestHum1">--</div>
+        <small>Humidity</small>
+    </div>
+
+    <div class="device">
+        <h3>ESP32 #2</h3>
+        <div class="value" id="latestTemp2">--</div>
+        <small>Temperature</small>
+        <div class="value" id="latestHum2">--</div>
+        <small>Humidity</small>
+    </div>
 </div>
 
-<canvas id="tempChart" height="100"></canvas>
-<canvas id="humChart" height="100"></canvas>
+<div class="chart-container">
+    <canvas id="tempChart"></canvas>
+</div>
+
+<div class="chart-container">
+    <canvas id="humChart"></canvas>
+</div>
 
 <table id="dataTable">
     <thead>
