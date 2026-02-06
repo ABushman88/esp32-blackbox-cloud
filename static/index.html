@@ -5,108 +5,92 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            background-color: #121212;
-            color: #ffffff;
-            font-family: Arial, sans-serif;
-            margin: 10px;
-        }
+    background-color: #121212;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    margin: 10px;
+}
 
-        h1, h2 {
-            color: #f0f0f0;
-        }
+h1 {
+    margin-bottom: 8px;
+}
 
-        .latest-readings {
-            display: flex;
-            gap: 30px;
-            margin-bottom: 20px;
-        }
+/* === Status bar === */
+.status-bar {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
 
-        .latest-readings div {
-            background-color: #1e1e1e;
-            padding: 10px 15px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px #000;
-        }
+.device {
+    flex: 1;
+    background: #1e1e1e;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 0 10px #000;
+}
 
-        canvas {
-            background-color: #1e1e1e;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
+.device h3 {
+    margin: 4px 0;
+    font-size: 15px;
+}
 
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            max-height: 300px;
-            display: block;
-            overflow-y: auto;
-            background-color: #1e1e1e;
-            border-radius: 8px;
-        }
+.device .value {
+    font-size: 26px;
+    font-weight: bold;
+    margin-top: 4px;
+}
 
-        table thead {
-            position: sticky;
-            top: 0;
-            background-color: #2c2c2c;
-        }
+.device small {
+    color: #aaa;
+}
 
-        table th, table td {
-            border: 1px solid #333;
-            padding: 6px 10px;
-            color: #ffffff;
-            text-align: center;
-        }
+/* === Charts === */
+.chart-container {
+    height: 40vh;
+    margin-bottom: 10px;
+}
 
-        table th {
-            background-color: #2c2c2c;
-        }
+canvas {
+    width: 100% !important;
+    height: 100% !important;
+    background-color: #1e1e1e;
+    border-radius: 10px;
+}
 
-        @media (max-width: 768px) {
-            .latest-readings {
-                flex-direction: column;
-            }
-        }
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
+/* === Table === */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    max-height: 280px;
+    display: block;
+    overflow-y: auto;
+    background-color: #1e1e1e;
+    border-radius: 8px;
+}
 
-        .device {
-            flex: 1;
-            background: #1e1e1e;
-            padding: 10px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 0 10px #000;
-        }
-        
-        .device h3 {
-            margin: 4px 0;
-            font-size: 15px;
-        }
-        
-        .device .value {
-            font-size: 24px;
-            font-weight: bold;
-            margin-top: 4px;
-        }
-        
-        .device small {
-            color: #aaa;
-        }
-        
-        /* Chart sizing */
-        .chart-container {
-            height: 40vh;
-            margin-bottom: 10px;
-        }
-        
-        canvas {
-            width: 100% !important;
-            height: 100% !important;
-        }
+table thead {
+    position: sticky;
+    top: 0;
+    background-color: #2c2c2c;
+}
+
+table th, table td {
+    border: 1px solid #333;
+    padding: 6px 10px;
+    color: #ffffff;
+    text-align: center;
+}
+
+/* === Mobile layout === */
+@media (max-width: 768px) {
+    .status-bar {
+        flex-direction: column;
+    }
+}
+
     </style>
 </head>
 <body>
