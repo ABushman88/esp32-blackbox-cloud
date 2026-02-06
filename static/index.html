@@ -140,7 +140,7 @@ const humChart = new Chart(document.getElementById("humChart"), {
 async function update() {
     const d = await fetchData();
 
-    const labels = d.timestamps;
+    const labels = d.timestamps.map((_, i) => i);
 
     const t1 = [];
     const t2 = [];
