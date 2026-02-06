@@ -61,32 +61,6 @@ canvas{
     background:#1e1e1e;
     border-radius:10px;
 }
-options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    spanGaps: true,
-    scales: {
-        x: {
-            type: "time",
-            time: {
-                parser: "YYYY-MM-DD HH:mm:ss",
-                tooltipFormat: "HH:mm:ss",
-                unit: "second",
-                displayFormats: {
-                    second: "HH:mm:ss"
-                }
-            },
-            ticks: {
-                color: "white"
-            }
-        },
-        y: {
-            ticks: {
-                color: "white"
-            }
-        }
-    }
-}
 </style>
 </head>
 
@@ -174,7 +148,24 @@ const humChart = new Chart(document.getElementById("humChart"), {
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        spanGaps: true
+        spanGaps: true,
+        scales: {
+            x: {
+                type: "time",
+                time: {
+                    parser: "YYYY-MM-DD HH:mm:ss",
+                    tooltipFormat: "HH:mm:ss",
+                    unit: "second",
+                    displayFormats: {
+                        second: "HH:mm:ss"
+                    }
+                },
+                ticks: { color: "white" }
+            },
+            y: {
+                ticks: { color: "white" }
+            }
+        }
     }
 });
 async function update() {
