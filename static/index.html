@@ -178,12 +178,12 @@ async function update() {
 
     // Build a timestamp → {t1, t2, h1, h2} map
     const map = {};
-    
+
     d.timestamps.forEach((ts, i) => {
         if (!map[ts]) {
             map[ts] = { t1: null, t2: null, h1: null, h2: null };
         }
-    
+
         if (d.device_ids[i] === "esp32_blackbox_1") {
             map[ts].t1 = d.temperatures[i];
             map[ts].h1 = d.humidities[i];
@@ -192,27 +192,24 @@ async function update() {
             map[ts].h2 = d.humidities[i];
         }
     });
-    
+
     // Extract aligned arrays
     const labels = Object.keys(map).map(t => new Date(t.replace(" ", "T")));
-    const t1 = Object.values(map).map(v => v.t1);
-    const t2 = Object.values(map).map(v => v.t2);
-    const h1 = Object.values(map).map(v => v.h1);
-    const h2 = Object.values(map).map(v => v.h2);
+    let t1 = Object.values(map).map(v => v.t1);
+    let t2 = Object.values(map).map(v => v.t2);
+    let h1 = Object.values(map).map(v => v.h1);
+    let h2 = Object.values(map).map(v => v.h2);
 
-    d.device_ids.forEach((id, i) => {
-        if (id === "esp32_blackbox_1") {
-            t1.push(d.temperatures[i]);
-            h1.push(d.humidities[i]);
-            t2.push(null);
-            h2.push(null);
-        } else if (id === "esp32_blackbox_2") {
-            t2.push(d.temperatures[i]);
-            h2.push(d.humidities[i]);
-            t1.push(null);
-            h1.push(null);
-        }
-    });
+    // Backfill missing early values so both lines start together
+    function backfill(arr) {
+        const first = arr.find(v => v !== null);
+        return arr.map(v => v === null ? first : v);
+    }
+
+    t1 = backfill(t1);
+    t2 = backfill(t2);
+    h1 = backfill(h1);
+    h2 = backfill(h2);
 
     // Update charts
     tempChart.data.labels = labels;
@@ -225,16 +222,15 @@ async function update() {
     humChart.data.datasets[1].data = h2;
     humChart.update();
 
-    // Latest values
-   // Latest values with units
-    const lastT1 = t1.filter(x => x != null).slice(-1)[0];
-    const lastH1 = h1.filter(x => x != null).slice(-1)[0];
-    const lastT2 = t2.filter(x => x != null).slice(-1)[0];
-    const lastH2 = h2.filter(x => x != null).slice(-1)[0];
-    
+    // Latest values with units
+    const lastT1 = t1.slice(-1)[0];
+    const lastH1 = h1.slice(-1)[0];
+    const lastT2 = t2.slice(-1)[0];
+    const lastH2 = h2.slice(-1)[0];
+
     document.getElementById("t1").innerText = lastT1 !== undefined ? lastT1 + " °C" : "--";
     document.getElementById("h1").innerText = lastH1 !== undefined ? lastH1 + " %" : "--";
-    
+
     document.getElementById("t2").innerText = lastT2 !== undefined ? lastT2 + " °C" : "--";
     document.getElementById("h2").innerText = lastH2 !== undefined ? lastH2 + " %" : "--";
 
@@ -245,7 +241,7 @@ async function update() {
     document.getElementById("status2").className =
         "status-dot " + (d.status["esp32_blackbox_2"] || "offline");
 }
-
+    
 setInterval(update, 3000);
 update();
 </script>
