@@ -97,10 +97,34 @@ canvas{
 </div>
 
 <script>
+<script>
 async function fetchData() {
     const res = await fetch("/data");
     return await res.json();
 }
+
+// CREATE CHARTS (this was missing)
+const tempChart = new Chart(document.getElementById("tempChart"), {
+    type: "line",
+    data: {
+        labels: [],
+        datasets: [
+            { label: "ESP32 #1", borderColor: "red", data: [], fill: false },
+            { label: "ESP32 #2", borderColor: "lime", data: [], fill: false }
+        ]
+    }
+});
+
+const humChart = new Chart(document.getElementById("humChart"), {
+    type: "line",
+    data: {
+        labels: [],
+        datasets: [
+            { label: "ESP32 #1", borderColor: "cyan", data: [], fill: false },
+            { label: "ESP32 #2", borderColor: "orange", data: [], fill: false }
+        ]
+    }
+});
 async function update() {
     const d = await fetchData();
 
