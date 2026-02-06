@@ -97,6 +97,10 @@ canvas{
 </div>
 
 <script>
+async function fetchData() {
+    const res = await fetch("/data");
+    return await res.json();
+}
 async function update() {
     const d = await fetchData();
 
