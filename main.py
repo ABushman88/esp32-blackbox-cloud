@@ -11,10 +11,18 @@ app = FastAPI()
 # Timezone
 central_tz = pytz.timezone("US/Central")
 
-# Database
-conn = sqlite3.connect("telemetry.db", check_same_thread=False)
-cursor = conn.cursor()
+# --- Database Helpers ---
+DB_PATH = "telemetry.db"
 
+def get_db():
+    """Create a new SQLite connection per request."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+# Initialize DB
+conn = get_db()
+cursor = conn.cursor()
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS telemetry (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,30 +34,44 @@ CREATE TABLE IF NOT EXISTS telemetry (
 )
 """)
 conn.commit()
+conn.close()
 
 # Static folder
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-# Receive telemetry
+
+# --- Receive Telemetry ---
 @app.post("/telemetry")
 async def receive_telemetry(request: Request):
     data = await request.json()
     now_ct = datetime.now(central_tz).strftime("%Y-%m-%d %H:%M:%S")
 
-    if "temperature" in data and "humidity" in data and "device_id" in data:
-        cursor.execute(
-            "INSERT INTO telemetry (device_id, temperature, humidity, timestamp, last_seen) VALUES (?, ?, ?, ?, ?)",
-            (data["device_id"], data["temperature"], data["humidity"], now_ct, now_ct)
-        )
-        conn.commit()
-        return {"status": "logged"}
-    else:
+    required = {"device_id", "temperature", "humidity"}
+    if not required.issubset(data):
         return {"status": "error", "message": "missing fields"}
 
-# Serve telemetry
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO telemetry (device_id, temperature, humidity, timestamp, last_seen)
+        VALUES (?, ?, ?, ?, ?)
+    """, (data["device_id"], data["temperature"], data["humidity"], now_ct, now_ct))
+
+    conn.commit()
+    conn.close()
+
+    return {"status": "logged"}
+
+
+# --- Serve Telemetry Data ---
 @app.get("/data")
 async def get_data():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Last 100 readings
     cursor.execute("""
         SELECT device_id, temperature, humidity, timestamp
         FROM telemetry
@@ -57,35 +79,37 @@ async def get_data():
         LIMIT 100
     """)
     rows = cursor.fetchall()
-    rows.reverse()
+    rows = list(rows)[::-1]  # reverse chronological
 
     # Last seen per device
     cursor.execute("""
-        SELECT device_id, MAX(last_seen)
+        SELECT device_id, MAX(last_seen) AS last_seen
         FROM telemetry
         GROUP BY device_id
     """)
     last_seen_rows = cursor.fetchall()
 
+    conn.close()
+
     now = datetime.now(central_tz)
     status = {}
 
-    for device, last_seen in last_seen_rows:
-        last_seen_dt = datetime.strptime(last_seen, "%Y-%m-%d %H:%M:%S")
+    for row in last_seen_rows:
+        last_seen_dt = datetime.strptime(row["last_seen"], "%Y-%m-%d %H:%M:%S")
         delta = now - last_seen_dt
-        status[device] = "online" if delta < timedelta(seconds=15) else "offline"
+        status[row["device_id"]] = "online" if delta < timedelta(seconds=15) else "offline"
 
     return JSONResponse({
-        "timestamps": [r[3] for r in rows],
-        "device_ids": [r[0] for r in rows],
-        "temperatures": [r[1] for r in rows],
-        "humidities": [r[2] for r in rows],
+        "timestamps": [r["timestamp"] for r in rows],
+        "device_ids": [r["device_id"] for r in rows],
+        "temperatures": [r["temperature"] for r in rows],
+        "humidities": [r["humidity"] for r in rows],
         "status": status
     })
 
-# Serve dashboard
+
+# --- Serve Dashboard ---
 @app.get("/", response_class=HTMLResponse)
 async def index():
     with open(os.path.join(STATIC_DIR, "index.html")) as f:
         return f.read()
-
