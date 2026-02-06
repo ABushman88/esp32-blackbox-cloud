@@ -99,9 +99,12 @@ async def get_data():
             status[row["device_id"]] = "offline"
             continue
         
-            last_seen_dt = datetime.strptime(row["last_seen"], "%Y-%m-%d %H:%M:%S")
-            delta = now - last_seen_dt
-            status[row["device_id"]] = "online" if delta < timedelta(seconds=15) else "offline"
+        last_seen_dt = central_tz.localize(
+            datetime.strptime(row["last_seen"], "%Y-%m-%d %H:%M:%S")
+        )
+        
+        delta = now - last_seen_dt
+        status[row["device_id"]] = "online" if delta < timedelta(seconds=15) else "offline"
 
     return JSONResponse({
         "timestamps": [r["timestamp"] for r in rows],
