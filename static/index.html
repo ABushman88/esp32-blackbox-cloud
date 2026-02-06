@@ -176,12 +176,29 @@ const humChart = new Chart(document.getElementById("humChart"), {
 async function update() {
     const d = await fetchData();
 
-    const labels = d.timestamps.map(t => new Date(t.replace(" ", "T")));
-
-    const t1 = [];
-    const t2 = [];
-    const h1 = [];
-    const h2 = [];
+    // Build a timestamp → {t1, t2, h1, h2} map
+    const map = {};
+    
+    d.timestamps.forEach((ts, i) => {
+        if (!map[ts]) {
+            map[ts] = { t1: null, t2: null, h1: null, h2: null };
+        }
+    
+        if (d.device_ids[i] === "esp32_blackbox_1") {
+            map[ts].t1 = d.temperatures[i];
+            map[ts].h1 = d.humidities[i];
+        } else if (d.device_ids[i] === "esp32_blackbox_2") {
+            map[ts].t2 = d.temperatures[i];
+            map[ts].h2 = d.humidities[i];
+        }
+    });
+    
+    // Extract aligned arrays
+    const labels = Object.keys(map).map(t => new Date(t.replace(" ", "T")));
+    const t1 = Object.values(map).map(v => v.t1);
+    const t2 = Object.values(map).map(v => v.t2);
+    const h1 = Object.values(map).map(v => v.h1);
+    const h2 = Object.values(map).map(v => v.h2);
 
     d.device_ids.forEach((id, i) => {
         if (id === "esp32_blackbox_1") {
