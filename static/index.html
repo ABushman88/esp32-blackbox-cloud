@@ -3,6 +3,8 @@
 <head>
 <title>ESP32 Blackbox</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
 
 <style>
 body {
@@ -62,7 +64,28 @@ canvas{
 options: {
     responsive: true,
     maintainAspectRatio: false,
-    spanGaps: true
+    spanGaps: true,
+    scales: {
+        x: {
+            type: "time",
+            time: {
+                parser: "YYYY-MM-DD HH:mm:ss",
+                tooltipFormat: "HH:mm:ss",
+                unit: "second",
+                displayFormats: {
+                    second: "HH:mm:ss"
+                }
+            },
+            ticks: {
+                color: "white"
+            }
+        },
+        y: {
+            ticks: {
+                color: "white"
+            }
+        }
+    }
 }
 </style>
 </head>
@@ -118,7 +141,24 @@ const tempChart = new Chart(document.getElementById("tempChart"), {
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        spanGaps: true
+        spanGaps: true,
+        scales: {
+            x: {
+                type: "time",
+                time: {
+                    parser: "YYYY-MM-DD HH:mm:ss",
+                    tooltipFormat: "HH:mm:ss",
+                    unit: "second",
+                    displayFormats: {
+                        second: "HH:mm:ss"
+                    }
+                },
+                ticks: { color: "white" }
+            },
+            y: {
+                ticks: { color: "white" }
+            }
+        }
     }
 });
 
@@ -140,7 +180,7 @@ const humChart = new Chart(document.getElementById("humChart"), {
 async function update() {
     const d = await fetchData();
 
-    const labels = d.timestamps.map((_, i) => i);
+    const labels = d.timestamps;
 
     const t1 = [];
     const t2 = [];
