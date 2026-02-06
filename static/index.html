@@ -97,53 +97,34 @@ canvas{
 </div>
 
 <script>
-async function fetchData(){
-    return await (await fetch("/data")).json();
-}
-
-const tempChart = new Chart(tempChartCanvas = document.getElementById("tempChart"),{
-    type:"line",
-    data:{labels:[],datasets:[
-        {label:"ESP32 #1",borderColor:"red",data:[],fill:false},
-        {label:"ESP32 #2",borderColor:"lime",data:[],fill:false}
-    ]}
-});
-
-const humChart = new Chart(humChartCanvas = document.getElementById("humChart"),{
-    type:"line",
-    data:{labels:[],datasets:[
-        {label:"ESP32 #1",borderColor:"cyan",data:[],fill:false},
-        {label:"ESP32 #2",borderColor:"orange",data:[],fill:false}
-    ]}
-});
-
-async function update(){
+async function update() {
     const d = await fetchData();
 
-    const d1 = [];
-    const d2 = [];
+    const labels = d.timestamps;
+
+    const t1 = [];
+    const t2 = [];
     const h1 = [];
     const h2 = [];
-    const labels = [];
 
-    d.device_ids.forEach((id,i)=>{
-        labels.push(d.timestamps[i]);
-        if(id==="esp32_blackbox_1"){
-            d1.push(d.temperatures[i]);
+    d.device_ids.forEach((id, i) => {
+        if (id === "esp32_blackbox_1") {
+            t1.push(d.temperatures[i]);
             h1.push(d.humidities[i]);
-            d2.push(null);
+            t2.push(null);
             h2.push(null);
-        }else{
-            d2.push(d.temperatures[i]);
+        } else if (id === "esp32_blackbox_2") {
+            t2.push(d.temperatures[i]);
             h2.push(d.humidities[i]);
-            d1.push(null);
+            t1.push(null);
             h1.push(null);
         }
     });
 
+    // Update charts
     tempChart.data.labels = labels;
-    tempChart.data.datasets[0].data = d1;
-    tempChart.data.datasets[1].data = d2;
+    tempChart.data.datasets[0].data = t1;
+    tempChart.data.datasets[1].data = t2;
     tempChart.update();
 
     humChart.data.labels = labels;
@@ -151,13 +132,18 @@ async function update(){
     humChart.data.datasets[1].data = h2;
     humChart.update();
 
-    document.getElementById("t1").innerText = d1.filter(x=>x!=null).slice(-1)[0] || "--";
-    document.getElementById("h1").innerText = h1.filter(x=>x!=null).slice(-1)[0] || "--";
-    document.getElementById("t2").innerText = d2.filter(x=>x!=null).slice(-1)[0] || "--";
-    document.getElementById("h2").innerText = h2.filter(x=>x!=null).slice(-1)[0] || "--";
+    // Latest values
+    document.getElementById("t1").innerText = t1.filter(x => x != null).slice(-1)[0] || "--";
+    document.getElementById("h1").innerText = h1.filter(x => x != null).slice(-1)[0] || "--";
+    document.getElementById("t2").innerText = t2.filter(x => x != null).slice(-1)[0] || "--";
+    document.getElementById("h2").innerText = h2.filter(x => x != null).slice(-1)[0] || "--";
 
-    document.getElementById("status1").className = "status-dot " + (d.status["esp32_blackbox_1"] || "offline");
-    document.getElementById("status2").className = "status-dot " + (d.status["esp32_blackbox_2"] || "offline");
+    // Status
+    document.getElementById("status1").className =
+        "status-dot " + (d.status["esp32_blackbox_1"] || "offline");
+
+    document.getElementById("status2").className =
+        "status-dot " + (d.status["esp32_blackbox_2"] || "offline");
 }
 
 setInterval(update, 3000);
