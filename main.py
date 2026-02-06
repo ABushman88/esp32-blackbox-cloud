@@ -95,9 +95,13 @@ async def get_data():
     status = {}
 
     for row in last_seen_rows:
-        last_seen_dt = datetime.strptime(row["last_seen"], "%Y-%m-%d %H:%M:%S")
-        delta = now - last_seen_dt
-        status[row["device_id"]] = "online" if delta < timedelta(seconds=15) else "offline"
+        if row["last_seen"] is None:
+            status[row["device_id"]] = "offline"
+            continue
+        
+            last_seen_dt = datetime.strptime(row["last_seen"], "%Y-%m-%d %H:%M:%S")
+            delta = now - last_seen_dt
+            status[row["device_id"]] = "online" if delta < timedelta(seconds=15) else "offline"
 
     return JSONResponse({
         "timestamps": [r["timestamp"] for r in rows],
