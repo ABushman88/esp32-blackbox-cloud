@@ -59,6 +59,11 @@ canvas{
     background:#1e1e1e;
     border-radius:10px;
 }
+options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    spanGaps: true
+}
 </style>
 </head>
 
@@ -109,6 +114,11 @@ const tempChart = new Chart(document.getElementById("tempChart"), {
             { label: "ESP32 #1", borderColor: "red", data: [], fill: false },
             { label: "ESP32 #2", borderColor: "lime", data: [], fill: false }
         ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        spanGaps: true
     }
 });
 
@@ -120,6 +130,11 @@ const humChart = new Chart(document.getElementById("humChart"), {
             { label: "ESP32 #1", borderColor: "cyan", data: [], fill: false },
             { label: "ESP32 #2", borderColor: "orange", data: [], fill: false }
         ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        spanGaps: true
     }
 });
 async function update() {
