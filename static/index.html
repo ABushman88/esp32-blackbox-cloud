@@ -129,7 +129,9 @@ const tempChart = new Chart(document.getElementById("tempChart"), {
         y: {
             ticks: {
                 color: "white",
-                callback: value => value.toFixed(1) + " °C"
+                callback: function(value) {
+                    return Number(value).toFixed(1) + " °C";
+                }
             }
         }
     }
@@ -163,7 +165,9 @@ const humChart = new Chart(document.getElementById("humChart"), {
         y: {
             ticks: {
                 color: "white",
-                callback: value => value.toFixed(1) + " %"
+                callback: function(value) {
+                    return Number(value).toFixed(1) + " %";
+                }
             }
         }
     }
