@@ -102,7 +102,6 @@ async function fetchData() {
     return await res.json();
 }
 
-// CREATE CHARTS (this was missing)
 const tempChart = new Chart(document.getElementById("tempChart"), {
     type: "line",
     data: {
@@ -112,28 +111,29 @@ const tempChart = new Chart(document.getElementById("tempChart"), {
             { label: "ESP32 #2", borderColor: "lime", data: [], fill: false }
         ]
     },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        spanGaps: true,
-        scales: {
-            x: {
-                type: "time",
-                time: {
-                    parser: "YYYY-MM-DD HH:mm:ss",
-                    tooltipFormat: "HH:mm:ss",
-                    unit: "second",
-                    displayFormats: {
-                        second: "HH:mm:ss"
-                    }
-                },
-                ticks: { color: "white" }
+   options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    spanGaps: true,
+    scales: {
+        x: {
+            type: "time",
+            time: {
+                parser: "YYYY-MM-DD HH:mm:ss",
+                tooltipFormat: "HH:mm:ss",
+                unit: "second",
+                displayFormats: { second: "HH:mm:ss" }
             },
-            y: {
-                ticks: { color: "white" }
+            ticks: { color: "white" }
+        },
+        y: {
+            ticks: {
+                color: "white",
+                callback: value => value + " °C"
             }
         }
     }
+}
 });
 
 const humChart = new Chart(document.getElementById("humChart"), {
@@ -146,27 +146,28 @@ const humChart = new Chart(document.getElementById("humChart"), {
         ]
     },
     options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        spanGaps: true,
-        scales: {
-            x: {
-                type: "time",
-                time: {
-                    parser: "YYYY-MM-DD HH:mm:ss",
-                    tooltipFormat: "HH:mm:ss",
-                    unit: "second",
-                    displayFormats: {
-                        second: "HH:mm:ss"
-                    }
-                },
-                ticks: { color: "white" }
+    responsive: true,
+    maintainAspectRatio: false,
+    spanGaps: true,
+    scales: {
+        x: {
+            type: "time",
+            time: {
+                parser: "YYYY-MM-DD HH:mm:ss",
+                tooltipFormat: "HH:mm:ss",
+                unit: "second",
+                displayFormats: { second: "HH:mm:ss" }
             },
-            y: {
-                ticks: { color: "white" }
+            ticks: { color: "white" }
+        },
+        y: {
+            ticks: {
+                color: "white",
+                callback: value => value + " %"
             }
         }
     }
+}
 });
 async function update() {
     const d = await fetchData();
@@ -204,10 +205,17 @@ async function update() {
     humChart.update();
 
     // Latest values
-    document.getElementById("t1").innerText = t1.filter(x => x != null).slice(-1)[0] || "--";
-    document.getElementById("h1").innerText = h1.filter(x => x != null).slice(-1)[0] || "--";
-    document.getElementById("t2").innerText = t2.filter(x => x != null).slice(-1)[0] || "--";
-    document.getElementById("h2").innerText = h2.filter(x => x != null).slice(-1)[0] || "--";
+   // Latest values with units
+    const lastT1 = t1.filter(x => x != null).slice(-1)[0];
+    const lastH1 = h1.filter(x => x != null).slice(-1)[0];
+    const lastT2 = t2.filter(x => x != null).slice(-1)[0];
+    const lastH2 = h2.filter(x => x != null).slice(-1)[0];
+    
+    document.getElementById("t1").innerText = lastT1 !== undefined ? lastT1 + " °C" : "--";
+    document.getElementById("h1").innerText = lastH1 !== undefined ? lastH1 + " %" : "--";
+    
+    document.getElementById("t2").innerText = lastT2 !== undefined ? lastT2 + " °C" : "--";
+    document.getElementById("h2").innerText = lastH2 !== undefined ? lastH2 + " %" : "--";
 
     // Status
     document.getElementById("status1").className =
